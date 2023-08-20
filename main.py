@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 load_dotenv()
 
-TOKEN = os.getenv("TOKEN")
+TOKEN = os.getenv("DISCORD_TOKEN")
 
 
 intents = discord.Intents.default()
@@ -31,8 +31,8 @@ async def on_ready():
 @tree.command()
 async def ping(interaction: Interaction):
     message_lines = [
-        ["Discord Websocket Latency", f'"{client.latency * 1000:.2f}ms"'],
-        ["Discord REST Latency", "..."],
+        ["Discord Websocket", f'"{client.latency * 1000:.2f}ms"'],
+        ["Discord REST", "..."],
     ]
     format_message_lines = lambda: (
         f"```ml\n{message_formatting.align_to_columns(message_lines, column_sep=' : ')}```"
