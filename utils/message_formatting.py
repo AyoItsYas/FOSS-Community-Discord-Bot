@@ -10,12 +10,14 @@ def align_to_columns(
     data: Iterable[Iterable[str]],
     *,
     column_sep: Union[Iterable[str], str] = " ",
+    return_as_iterable: bool = False,
 ) -> str:
     """Align strings into aligned columns.
 
     Args:
         data (Iterable[Iterable[str]]): Matrix of strings to align.
         column_sep (Union[Iterable[str], str], optional): Column seperator. Can either be an Iterable that specifies a seperator between each column or a string that is used to seperate each column. Defaults to None.
+        return_as_iterable (bool, optional): Whether to return the aligned columns as an Iterable or a string. Defaults to False.
 
     Raises:
         ValueError: Raises ValueError if column_sep is an Iterable and the length of the Iterable is not equal to the number of columns.
@@ -42,4 +44,4 @@ def align_to_columns(
                 line += column_sep[i]
         lines.append(line)
 
-    return "\n".join(lines)
+    return lines if return_as_iterable else "\n".join(lines)
