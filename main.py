@@ -15,6 +15,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
+from core.Theme import ThemedEmbed
 from utils import Timer, TextFormatter
 
 if TYPE_CHECKING:
@@ -59,13 +60,13 @@ async def ping(interaction: Interaction):
 
     with Timer() as timer:
         await interaction.response.send_message(
-            embed=discord.Embed(description=format_message_lines())
+            embed=ThemedEmbed(description=format_message_lines())
         )
 
     message_lines[1][1] = f'"{(timer.time) * 1000:.2f}ms"'
 
     await interaction.edit_original_response(
-        embed=discord.Embed(description=format_message_lines())
+        embed=ThemedEmbed(description=format_message_lines())
     )
 
 
@@ -76,7 +77,7 @@ async def execute(interaction: Interaction, *, body: str):
         body = await interaction.channel.fetch_message(int(body))
         if body is None:
             await interaction.response.send_message(
-                embed=discord.Embed(description="Message not found.")
+                embed=ThemedEmbed.Error(description="Message not found.")
             )
             return
 
@@ -84,7 +85,7 @@ async def execute(interaction: Interaction, *, body: str):
         body = body_raw = "\n".join(body.split("\n")[1:-1])
 
         await interaction.response.send_message(
-            embed=discord.Embed(description=f"```py\n{body}```")
+            embed=ThemedEmbed(description=f"```py\n{body}```")
         )
 
         env = {
@@ -96,6 +97,7 @@ async def execute(interaction: Interaction, *, body: str):
             "response": interaction.response,
             "print": lambda *x, **y: pprint.pprint(*x, indent=4, **y),
             "raw_print": print,
+            "Embed": ThemedEmbed,
         }
 
         stdout = io.StringIO()
@@ -105,7 +107,7 @@ async def execute(interaction: Interaction, *, body: str):
             exec(to_compile, env)
         except Exception as e:
             await interaction.edit_original_response(
-                embed=discord.Embed(
+                embed=ThemedEmbed.Error(
                     description=f"```py\n{body_raw}``````py\n{e.__class__.__name__}: {e}\n```"
                 )
             )
@@ -121,12 +123,13 @@ async def execute(interaction: Interaction, *, body: str):
         except Exception as _:  # noqa
             value = stdout.getvalue()
             text = f"```py\n{body_raw}``````py\n{value}{traceback.format_exc()}\n```"
+            embed = ThemedEmbed.Warning(description=text)
         else:
             value = stdout.getvalue()
             text = f"```py\n{body_raw}``````py\n{value}\n# Returned {ret}, executed in {exec_time * 1000} ms```"
+            embed = ThemedEmbed(description=text)
 
-        await interaction.edit_original_response(embed=discord.Embed(description=text))
-        return value
+        await interaction.edit_original_response(embed=embed)
 
 
 @commands.is_owner()
@@ -154,7 +157,7 @@ async def shell(interaction: Interaction, *, body: str):
         body = await interaction.channel.fetch_message(int(body))
         if body is None:
             await interaction.response.send_message(
-                embed=discord.Embed(description="Message not found.")
+                embed=ThemedEmbed(description="Message not found.")
             )
             return
 
@@ -162,7 +165,7 @@ async def shell(interaction: Interaction, *, body: str):
         body = "\n".join(body.split("\n")[1:-1])
 
         await interaction.response.send_message(
-            embed=discord.Embed(description=f"```sh\n{body}```")
+            embed=ThemedEmbed(description=f"```sh\n{body}```")
         )
 
         stdout, stderr = await run_process(body)
@@ -173,7 +176,7 @@ async def shell(interaction: Interaction, *, body: str):
             text = stdout
 
         await interaction.edit_original_response(
-            embed=discord.Embed(description=f"```sh\n{body}``````sh\n{text}```")
+            embed=ThemedEmbed(description=f"```sh\n{body}``````sh\n{text}```")
         )
 
 
@@ -186,19 +189,19 @@ async def on_error(
 ):
     match error:
         case app_commands.errors.CommandOnCooldown():
-            embed = discord.Embed(
+            embed = ThemedEmbed.Error(
                 description=f"You are on cooldown! Try again in {error.retry_after:.2f}s"
             )
 
             return await interaction.response.send_message(embed=embed)
         case app_commands.errors.MissingPermissions():
-            embed = discord.Embed(
+            embed = ThemedEmbed.Error(
                 description="You do not have the required permissions to run this command."
             )
 
             return await interaction.response.send_message(embed=embed)
         case _:
-            embed = discord.Embed(description="An unhandled exception occured!")
+            embed = ThemedEmbed.Error(description="An unhandled exception occured!")
 
             if interaction.response.is_done():
                 await interaction.edit_original_response(embed=embed)
