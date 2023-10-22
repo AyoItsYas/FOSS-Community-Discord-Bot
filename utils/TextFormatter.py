@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 def align_to_columns(
-    data: Iterable[Iterable[str]],
+    text: Iterable[Iterable[str]],
     *,
     column_sep: Union[Iterable[str], str] = " ",
     return_as_iterable: bool = False,
@@ -25,7 +25,7 @@ def align_to_columns(
     Returns:
         str: Returns a string with the aligned columns.
     """
-    column_max_widths = [max(map(len, column)) for column in zip(*data)]
+    column_max_widths = [max(map(len, column)) for column in zip(*text)]
 
     if column_sep is not None:
         if isinstance(column_sep, str):
@@ -36,7 +36,7 @@ def align_to_columns(
             )
 
     lines = []
-    for row in data:
+    for row in text:
         line = ""
         for i, (column, width) in enumerate(zip(row, column_max_widths)):
             line += column.ljust(width)
@@ -45,3 +45,37 @@ def align_to_columns(
         lines.append(line)
 
     return lines if return_as_iterable else "\n".join(lines)
+
+
+def cleanup_code(text: str):
+    """Automatically removes code blocks from the code."""
+    if text.splitlines()[0][0:3] == "```" and text.endswith("```"):
+        return "\n".join(text.split("\n")[1:-1])
+
+    return text.strip("` \n")
+
+
+def encapsulate(data: str, encapsulator: str) -> str:
+    """Encapsulate a string with a string.
+
+    Args:
+        `data` (str): String to encapsulate.
+        `encapsulator` (str): String to encapsulate with.
+
+    Returns:
+        `str`: Encapsulated string.
+    """
+    return f"{encapsulator}{data}{encapsulator}"
+
+
+def codeblock(data: str, language: str = "") -> str:
+    """Encapsulate a string with a codeblock.
+
+    Args:
+        `data` (str): String to encapsulate.
+        `language` (str, optional): Language of the codeblock. Defaults to "".
+
+    Returns:
+        `str`: Encapsulated string.
+    """
+    return f"```{language}\n{data}\n```"
